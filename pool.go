@@ -1,21 +1,54 @@
 package l1
 
 import (
-	"fmt"
+	"sync"
 )
 
-// Start starts the runner.
-func (r *Runner) Start() error {
-	jobChan := make(chan string, r.MaxParrellConnections)
-	// resultsChan := make(chan struct{})
+type Task struct {
+	Target string
+	Result *Result
+	F      F
+}
 
-	for i := 0; i < r.MaxParrellConnections; i++ {
-		go func(jobChan chan string) {
-			for t := range jobChan {
-				r.RunFunc(t)
-			}
-		}(jobChan)
+type pool struct {
+	tasks       []*Task
+	concurrency int
+
+	tasksChan chan *Task
+	wg        sync.WaitGroup
+}
+
+func newPool(tasks []*Task, concurrency int) *pool {
+	return &pool{
+		tasks:       tasks,
+		concurrency: concurrency,
+		tasksChan:   make(chan *Task),
+	}
+}
+
+// run will run all work within the pool.
+func (p *pool) run() {
+	for i := 0; i < p.concurrency; i++ {
+		go p.work()
 	}
 
-	return fmt.Errorf("unimplemented")
+	p.wg.Add(len(p.tasks))
+	for _, t := range p.tasks {
+		p.tasksChan <- t
+	}
+
+	close(p.tasksChan)
+
+	p.wg.Wait()
+}
+
+func (p *pool) work() {
+	for t := range p.tasksChan {
+		if t.F == nil {
+			continue
+		}
+		res := t.F(t.Target)
+		t.Result = res
+		p.wg.Done()
+	}
 }

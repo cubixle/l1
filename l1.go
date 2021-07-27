@@ -5,7 +5,7 @@ import (
 )
 
 // F defines the function type for runners.
-type F func(target string) error
+type F func(target string) *Result
 
 // Runner
 type Runner struct {
@@ -15,6 +15,7 @@ type Runner struct {
 	RunTime               time.Duration
 	RunFunc               F
 	Target                string
+	results               []*Result
 }
 
 func NewRunner(opts ...Opt) (*Runner, error) {
@@ -38,4 +39,26 @@ func NewRunner(opts ...Opt) (*Runner, error) {
 
 func (r *Runner) SetOpt(o Opt) {
 	o(r)
+}
+
+func (r *Runner) Execute() {
+	tasks := []*Task{}
+	for i := 0; i < r.MaxConnections; i++ {
+		tasks = append(tasks, &Task{Target: r.Target, F: r.RunFunc})
+	}
+	// create the pool and process the tasks.
+	pool := newPool(tasks, r.MaxParrellConnections)
+	// the tasks are updated in memory so we don't expect a return here.
+	pool.run()
+	for _, t := range tasks {
+		r.results = append(r.results, t.Result)
+	}
+}
+
+func (r *Runner) Results() *results {
+	res := &results{
+		Results: r.results,
+		Target:  r.Target,
+	}
+	return res
 }
