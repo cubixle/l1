@@ -28,6 +28,8 @@ func DefaultHTTPTester(target string) *Result {
 	if err != nil {
 		result.Error = err
 	}
+	defer rsp.Body.Close()
+
 	result.CompletedIn = float64(time.Since(startTime).Milliseconds())
 	result.StatusCode = rsp.StatusCode
 
