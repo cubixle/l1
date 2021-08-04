@@ -40,3 +40,9 @@ func WithRunFunc(f F) Opt {
 		r.RunFunc = f
 	}
 }
+
+func WithRampUp(seconds int) Opt {
+	return func(r *Runner) {
+		r.RampUp = seconds
+	}
+}

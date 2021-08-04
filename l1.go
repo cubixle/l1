@@ -15,6 +15,7 @@ type Runner struct {
 	RunTime               time.Duration
 	RunFunc               F
 	Target                string
+	RampUp                int
 	results               []*Result
 }
 
@@ -24,6 +25,7 @@ func NewRunner(opts ...Opt) (*Runner, error) {
 		Timeout:               30 * time.Second,
 		MaxParrellConnections: 10,
 		MaxConnections:        10,
+		RampUp:                0,
 	}
 
 	for _, o := range opts {
@@ -46,10 +48,18 @@ func (r *Runner) Execute() {
 	for i := 0; i < r.MaxConnections; i++ {
 		tasks = append(tasks, &Task{Target: r.Target, F: r.RunFunc})
 	}
+
+	waitDuration := 0
+	if r.RampUp > 0 {
+		waitDuration = r.RampUp / len(tasks)
+	}
+
 	// create the pool and process the tasks.
-	pool := newPool(tasks, r.MaxParrellConnections)
+	pool := newPool(tasks, r.MaxParrellConnections, waitDuration)
+
 	// the tasks are updated in memory so we don't expect a return here.
 	pool.run()
+
 	for _, t := range tasks {
 		r.results = append(r.results, t.Result)
 	}

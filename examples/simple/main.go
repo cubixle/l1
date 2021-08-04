@@ -11,7 +11,7 @@ func main() {
 		l1.WithTarget("https://remoteukjobs.com"),
 		l1.WithRunFunc(l1.DefaultHTTPTester),
 		l1.WithMaxParrellConns(10),
-		l1.WithMaxConns(6000),
+		l1.WithMaxConns(30),
 	)
 	if err != nil {
 		log.Fatal(err)

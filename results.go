@@ -20,14 +20,7 @@ type Result struct {
 }
 
 func (r *results) RequestPerSecond() float64 {
-	totalCompletedIn := float64(0)
-	for _, res := range r.Results {
-		if res.Error != nil {
-			continue
-		}
-		totalCompletedIn += res.CompletedIn
-	}
-
+	totalCompletedIn := r.CompletedTime() / 1000
 	return float64(len(r.Results)) / totalCompletedIn
 }
 
@@ -62,14 +55,7 @@ func (r *results) SuccessfulCount() int {
 }
 
 func (r *results) AvgResponseTime() float64 {
-	totalCompletedIn := float64(0)
-
-	for _, res := range r.Results {
-		if res.Error != nil {
-			continue
-		}
-		totalCompletedIn += res.CompletedIn
-	}
+	totalCompletedIn := r.CompletedTime()
 
 	return totalCompletedIn / float64(len(r.Results))
 }
@@ -97,7 +83,7 @@ func (r *results) Print() {
 	fmt.Printf("Load testing %s\n", r.Target)
 	fmt.Println("")
 	fmt.Printf("Request per second: %.2f\n", r.RequestPerSecond())
-	fmt.Printf("Average response time: %.2f seconds\n", r.AvgResponseTime())
+	fmt.Printf("Average response time: %.0f ms\n", r.AvgResponseTime())
 	fmt.Printf("Success count: %d\n", r.SuccessfulCount())
 	fmt.Printf("Error count: %d\n", r.ErrorCount())
 	fmt.Println("")

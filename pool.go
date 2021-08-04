@@ -2,6 +2,7 @@ package l1
 
 import (
 	"sync"
+	"time"
 )
 
 type Task struct {
@@ -11,18 +12,20 @@ type Task struct {
 }
 
 type pool struct {
-	tasks       []*Task
-	concurrency int
+	tasks          []*Task
+	concurrency    int
+	rampUpDuration int
 
 	tasksChan chan *Task
 	wg        sync.WaitGroup
 }
 
-func newPool(tasks []*Task, concurrency int) *pool {
+func newPool(tasks []*Task, concurrency, rampUpDuration int) *pool {
 	return &pool{
-		tasks:       tasks,
-		concurrency: concurrency,
-		tasksChan:   make(chan *Task),
+		tasks:          tasks,
+		concurrency:    concurrency,
+		tasksChan:      make(chan *Task),
+		rampUpDuration: rampUpDuration,
 	}
 }
 
@@ -32,9 +35,11 @@ func (p *pool) run() {
 		go p.work()
 	}
 
-	p.wg.Add(len(p.tasks))
 	for _, t := range p.tasks {
 		p.tasksChan <- t
+		p.wg.Add(1)
+
+		time.Sleep(time.Duration((1000 * p.rampUpDuration) * int(time.Millisecond)))
 	}
 
 	close(p.tasksChan)
