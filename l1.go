@@ -19,10 +19,14 @@ type Runner struct {
 	results               []*Result
 }
 
+// NewRunner creates a new Runner...
+// There a bunch of defaults that will be set that can be overwritten
+// with the Options (Opt) found in opts.go.
+//
+// The only error that is returned currently is if no target has been set
+// with the WithTarget option func.
 func NewRunner(opts ...Opt) (*Runner, error) {
 	r := &Runner{
-		RunTime:               60 * time.Second,
-		Timeout:               30 * time.Second,
 		MaxParrellConnections: 10,
 		MaxConnections:        10,
 		RampUp:                0,
@@ -39,10 +43,19 @@ func NewRunner(opts ...Opt) (*Runner, error) {
 	return r, nil
 }
 
+// SetOpt gives the ability to change the configuration of Runner in a
+// standardised way after NewRunner has been called.
 func (r *Runner) SetOpt(o Opt) {
 	o(r)
 }
 
+// Execute runs a worker pool and then fires off requests until MaxConnections
+// has been reached.
+//
+// Execute will block until all requests have been completed.
+//
+// All results are aggregated and are accessible via the .Results() method
+// once the requests have completed.
 func (r *Runner) Execute() {
 	tasks := []*Task{}
 	for i := 0; i < r.MaxConnections; i++ {
@@ -70,5 +83,6 @@ func (r *Runner) Results() *results {
 		Results: r.results,
 		Target:  r.Target,
 	}
+
 	return res
 }

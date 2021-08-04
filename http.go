@@ -5,6 +5,9 @@ import (
 	"time"
 )
 
+// DefaultHTTPTester is an implementation of a simple load testing func.
+// It follows the F signature and returns a Result.
+// Any errors that occur will be set at Result.Error.
 func DefaultHTTPTester(target string) *Result {
 	result := &Result{}
 	client := http.Client{
